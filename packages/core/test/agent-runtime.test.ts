@@ -113,6 +113,31 @@ describe("operating state reducer", () => {
     expect(initial.consecutiveFailures).toBe(0);
   });
 
+  it("applies decay before signal effects", () => {
+    const current = applyAgentSignal(
+      state({ uncertainty: 1, friction: 1, confidence: 0, momentum: 0 }),
+      { type: "progress" }
+    );
+
+    expect(current.uncertainty).toBeCloseTo(0.88);
+    expect(current.friction).toBeCloseTo(0.67);
+    expect(current.confidence).toBeCloseTo(0.235);
+    expect(current.momentum).toBeCloseTo(0.395);
+  });
+
+  it("converges toward rest when a zero-weight neutral signal advances time", () => {
+    let current = state({ uncertainty: 1, friction: 1, confidence: 0, momentum: 0 });
+
+    for (let i = 0; i < 80; i += 1) {
+      current = applyAgentSignal(current, { type: "progress", weight: 0 });
+    }
+
+    expect(current.uncertainty).toBeCloseTo(DEFAULT_OPERATING_CONFIG.rest.uncertainty, 5);
+    expect(current.friction).toBeCloseTo(DEFAULT_OPERATING_CONFIG.rest.friction, 5);
+    expect(current.confidence).toBeCloseTo(DEFAULT_OPERATING_CONFIG.rest.confidence, 5);
+    expect(current.momentum).toBeCloseTo(DEFAULT_OPERATING_CONFIG.rest.momentum, 5);
+  });
+
   it("keeps every dimension in range under a long noisy run", () => {
     const types = ["tool_success", "tool_error", "retry", "validation_fail", "retrieval_miss", "stall", "progress"] as const;
     let current = createOperatingState();
@@ -126,12 +151,57 @@ describe("operating state reducer", () => {
     expect(current.stepCount).toBe(200);
   });
 
+  it("tracks budget, load, and step count exactly", () => {
+    let current = createOperatingState();
+    for (let i = 1; i <= 6; i += 1) {
+      current = applyAgentSignal(current, { type: "progress", weight: 0 });
+      expect(current.stepCount).toBe(i);
+      expect(current.budgetUsed).toBeCloseTo(DEFAULT_OPERATING_CONFIG.stepCost * i);
+      expect(current.load).toBeCloseTo(DEFAULT_OPERATING_CONFIG.stepCost * i);
+    }
+  });
+
+  it("caps load while preserving exact budget used past one episode", () => {
+    let current = createOperatingState();
+    for (let i = 0; i < 30; i += 1) {
+      current = applyAgentSignal(current, { type: "progress", weight: 0 });
+    }
+
+    expect(current.budgetUsed).toBeGreaterThan(1);
+    expect(current.load).toBe(1);
+  });
+
   it("counts consecutive failures and resets them on recovery", () => {
     let current = createOperatingState();
     current = applyAgentSignal(current, { type: "tool_error" });
     current = applyAgentSignal(current, { type: "tool_error" });
     expect(current.consecutiveFailures).toBe(2);
     current = applyAgentSignal(current, { type: "tool_success" });
+    expect(current.consecutiveFailures).toBe(0);
+  });
+
+  it("does not reset consecutive failures for neutral retry or retrieval events", () => {
+    let current = createOperatingState();
+    current = applyAgentSignal(current, { type: "validation_fail" });
+    current = applyAgentSignal(current, { type: "retry" });
+    current = applyAgentSignal(current, { type: "retrieval_miss" });
+    expect(current.consecutiveFailures).toBe(1);
+  });
+
+  it("recovers confidence and momentum after a rough patch resolves", () => {
+    let current = createOperatingState();
+    current = applyAgentSignal(current, { type: "tool_error" });
+    current = applyAgentSignal(current, { type: "validation_fail" });
+    const rough = current;
+
+    for (let i = 0; i < 6; i += 1) {
+      current = applyAgentSignal(current, { type: "tool_success" });
+      current = applyAgentSignal(current, { type: "progress" });
+    }
+
+    expect(current.confidence).toBeGreaterThan(rough.confidence);
+    expect(current.momentum).toBeGreaterThan(rough.momentum);
+    expect(current.friction).toBeLessThan(rough.friction);
     expect(current.consecutiveFailures).toBe(0);
   });
 
@@ -188,5 +258,20 @@ describe("agent runtime control loop", () => {
     rt.reset();
     expect(rt.state.stepCount).toBe(0);
     expect(rt.state.consecutiveFailures).toBe(0);
+  });
+
+  it("does not over-abort a healthy run", () => {
+    const rt = new AgentRuntime();
+    const controls = [
+      rt.tick({ type: "tool_success" }).control,
+      rt.tick({ type: "validation_pass" }).control,
+      rt.tick({ type: "progress" }).control,
+      rt.tick({ type: "retrieval_hit" }).control,
+      rt.tick({ type: "progress" }).control
+    ];
+
+    expect(rt.decide().stop).toBe(false);
+    expect(controls).not.toContain("abort");
+    expect(controls).not.toContain("escalate");
   });
 });

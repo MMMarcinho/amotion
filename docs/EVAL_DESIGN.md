@@ -42,6 +42,10 @@ type OperatingEvalCase = {
   expectedFinal?: {
     control?: OperatingPolicy["control"];
     stop?: boolean;
+    requireVerification?: boolean;
+    requireConfirmation?: boolean;
+    retryBudget?: [min: number, max: number];
+    autonomy?: [min: number, max: number];
     maxSteps?: [min: number, max: number];
   };
   tags: string[];
@@ -67,6 +71,13 @@ Primary metrics:
 - Retry efficiency: fewer wasted steps than a blind loop.
 - Verification accuracy: uncertain traces require verification before action.
 - Escalation accuracy: high friction with low momentum asks for help before grinding.
+
+Current implementation:
+
+- Fixtures live in `evals/eval-fixtures.sample.ts`.
+- Trace replay lives in `evals/eval-runner.ts`.
+- Replay tests live in `evals/eval-runner.test.ts`.
+- `@amotion/eval` is a private workspace package and runs in root `pnpm test`.
 
 ## Track B — Optional User Affect
 

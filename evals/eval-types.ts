@@ -1,4 +1,4 @@
-import type { AgentSignal, EmotionIntent, OperatingPolicy, RuntimePolicy } from "../packages/core/src";
+import type { AgentSignal, EmotionIntent, OperatingPolicy, OperatingState, RuntimePolicy } from "amotion";
 
 export type OperatingEvalDomain = "coding" | "research" | "tool-use" | "planning" | "general";
 export type EvalLocale = "zh-CN" | "en-US" | "mixed";
@@ -29,6 +29,10 @@ export type OperatingEvalCase = {
   expectedFinal?: {
     control?: OperatingPolicy["control"];
     stop?: boolean;
+    requireVerification?: boolean;
+    requireConfirmation?: boolean;
+    retryBudget?: Range;
+    autonomy?: Range;
     maxSteps?: Range;
   };
   tags: string[];
@@ -65,8 +69,26 @@ export type EvalCase = AffectEvalCase;
 
 export type OperatingEvalScore = {
   id: string;
+  steps: number;
+  finalControl: OperatingPolicy["control"];
+  finalStop: boolean;
   policyPassRate: number;
   failures: string[];
+};
+
+export type OperatingReplayStep = {
+  step: number;
+  signal: AgentSignal;
+  state: OperatingState;
+  policy: OperatingPolicy;
+};
+
+export type OperatingReplayResult = {
+  id: string;
+  steps: OperatingReplayStep[];
+  finalState: OperatingState;
+  finalPolicy: OperatingPolicy;
+  score: OperatingEvalScore;
 };
 
 export type EvalScore = {

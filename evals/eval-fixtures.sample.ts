@@ -11,9 +11,15 @@ export const sampleOperatingEvalCases: OperatingEvalCase[] = [
       { type: "tool_error", note: "API timeout" },
       { type: "tool_error", note: "API timeout" }
     ],
+    expectedTimeline: [
+      { step: 4, control: "escalate", stop: false, requireConfirmation: true },
+      { step: 5, control: "abort", stop: true, requireConfirmation: true, autonomy: [0, 0] }
+    ],
     expectedFinal: {
       control: "abort",
-      stop: true
+      stop: true,
+      autonomy: [0, 0],
+      maxSteps: [1, 1]
     },
     tags: ["operating", "tool-error", "circuit-breaker"]
   },
@@ -27,8 +33,13 @@ export const sampleOperatingEvalCases: OperatingEvalCase[] = [
       { type: "progress" },
       { type: "validation_pass" }
     ],
+    expectedTimeline: [
+      { step: 2, stop: false },
+      { step: 5, stop: false }
+    ],
     expectedFinal: {
-      stop: false
+      stop: false,
+      retryBudget: [3, 4]
     },
     tags: ["operating", "recovery"]
   },
@@ -40,11 +51,88 @@ export const sampleOperatingEvalCases: OperatingEvalCase[] = [
       { type: "retrieval_miss" },
       { type: "self_report", confidence: 0.25 }
     ],
+    expectedTimeline: [
+      { step: 3, control: "verify", stop: false, requireVerification: true }
+    ],
     expectedFinal: {
       control: "verify",
-      stop: false
+      stop: false,
+      requireVerification: true
     },
     tags: ["operating", "uncertainty", "verification"]
+  },
+  {
+    id: "operating-validation-fail-aborts-001",
+    domain: "coding",
+    signals: [
+      { type: "validation_fail", note: "unit test failed" },
+      { type: "validation_fail", note: "unit test failed again" },
+      { type: "validation_fail", note: "same assertion" },
+      { type: "validation_fail", note: "same assertion" },
+      { type: "validation_fail", note: "same assertion" }
+    ],
+    expectedTimeline: [
+      { step: 3, control: "replan", stop: false, requireVerification: true },
+      { step: 5, control: "abort", stop: true }
+    ],
+    expectedFinal: {
+      control: "abort",
+      stop: true
+    },
+    tags: ["operating", "validation", "circuit-breaker"]
+  },
+  {
+    id: "operating-stall-escalates-001",
+    domain: "planning",
+    signals: [
+      { type: "retry" },
+      { type: "stall" },
+      { type: "retry" },
+      { type: "stall" },
+      { type: "retry" }
+    ],
+    expectedFinal: {
+      control: "escalate",
+      stop: false,
+      requireConfirmation: true,
+      maxSteps: [2, 2]
+    },
+    tags: ["operating", "stall", "escalation"]
+  },
+  {
+    id: "operating-healthy-run-does-not-over-abort-001",
+    domain: "tool-use",
+    signals: [
+      { type: "tool_success" },
+      { type: "validation_pass" },
+      { type: "progress" },
+      { type: "retrieval_hit" },
+      { type: "progress" }
+    ],
+    expectedFinal: {
+      control: "proceed",
+      stop: false,
+      requireVerification: false
+    },
+    tags: ["operating", "healthy", "over-abort"]
+  },
+  {
+    id: "operating-rough-patch-recovers-001",
+    domain: "tool-use",
+    signals: [
+      { type: "tool_error" },
+      { type: "validation_fail" },
+      { type: "tool_success" },
+      { type: "progress" },
+      { type: "tool_success" },
+      { type: "validation_pass" },
+      { type: "progress" }
+    ],
+    expectedFinal: {
+      stop: false,
+      retryBudget: [3, 4]
+    },
+    tags: ["operating", "rough-patch", "recovery"]
   }
 ];
 
