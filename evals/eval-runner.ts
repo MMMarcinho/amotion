@@ -1,4 +1,11 @@
-import { AgentRuntime, Amotion, type EmotionAnalyzer, type OperatingPolicy, type RuntimePolicy } from "amotion";
+import {
+  AgentRuntime,
+  Amotion,
+  type EmotionAnalyzer,
+  type OperatingPolicy,
+  type OperatingState,
+  type RuntimePolicy
+} from "amotion";
 import type {
   AffectEvalCase,
   EvalScore,
@@ -77,6 +84,51 @@ function scoreOperatingPolicy(
   };
 }
 
+function scoreOperatingFinal(
+  policy: OperatingPolicy,
+  state: OperatingState,
+  expected: NonNullable<OperatingEvalCase["expectedFinal"]>
+) {
+  const policyScore = scoreOperatingPolicy(policy, expected);
+  const failures = [...policyScore.failures];
+  let checks = policyScore.checks;
+  let passes = policyScore.passes;
+
+  for (const [dimension, range] of Object.entries(expected.state ?? {})) {
+    checks += 1;
+    const value = state[dimension as keyof NonNullable<typeof expected.state>];
+    if (typeof value === "number" && checkRange(`operatingState.${dimension}`, value, range, failures)) {
+      passes += 1;
+    }
+  }
+
+  if (typeof expected.consecutiveFailures === "number") {
+    checks += 1;
+    if (state.consecutiveFailures === expected.consecutiveFailures) {
+      passes += 1;
+    } else {
+      failures.push(
+        `operatingState.consecutiveFailures expected ${expected.consecutiveFailures}, got ${state.consecutiveFailures}`
+      );
+    }
+  }
+
+  if (typeof expected.stepCount === "number") {
+    checks += 1;
+    if (state.stepCount === expected.stepCount) {
+      passes += 1;
+    } else {
+      failures.push(`operatingState.stepCount expected ${expected.stepCount}, got ${state.stepCount}`);
+    }
+  }
+
+  return {
+    checks,
+    passes,
+    failures
+  };
+}
+
 function scoreOperatingTimeline(testCase: OperatingEvalCase, steps: OperatingReplayStep[]) {
   let checks = 0;
   let passes = 0;
@@ -119,7 +171,7 @@ export function replayOperatingCase(testCase: OperatingEvalCase): OperatingRepla
   const finalState = runtime.state;
   const timelineScore = scoreOperatingTimeline(testCase, steps);
   const finalScore = testCase.expectedFinal
-    ? scoreOperatingPolicy(finalPolicy, testCase.expectedFinal)
+    ? scoreOperatingFinal(finalPolicy, finalState, testCase.expectedFinal)
     : { checks: 0, passes: 0, failures: [] };
 
   const checks = timelineScore.checks + finalScore.checks;

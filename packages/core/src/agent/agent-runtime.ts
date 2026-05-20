@@ -59,5 +59,6 @@ export class AgentRuntime {
 
   reset(): void {
     this.currentState = createOperatingState(this.config);
+    this.affect = undefined;
   }
 }

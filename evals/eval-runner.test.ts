@@ -36,4 +36,26 @@ describe("operating runtime trace replay", () => {
       "operatingPolicy.stop expected true, got false"
     ]);
   });
+
+  it("scores final state ranges and exact counters", () => {
+    const replay = replayOperatingCase({
+      id: "final-state-mismatch",
+      domain: "tool-use",
+      signals: [{ type: "tool_success" }],
+      expectedFinal: {
+        stop: false,
+        state: { friction: [1, 1] },
+        consecutiveFailures: 42,
+        stepCount: 999
+      },
+      tags: ["mismatch"]
+    });
+
+    expect(replay.score.policyPassRate).toBeLessThan(1);
+    expect(replay.score.failures).toEqual([
+      "operatingState.friction expected 1..1, got 0",
+      "operatingState.consecutiveFailures expected 42, got 0",
+      "operatingState.stepCount expected 999, got 1"
+    ]);
+  });
 });
