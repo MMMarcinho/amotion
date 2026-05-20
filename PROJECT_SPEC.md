@@ -1,43 +1,70 @@
 # amotion Project Spec
 
-amotion is an emotion runtime layer for LLM agents.
+amotion is a runtime control layer for LLM agents.
 
-It converts user emotional signals into runtime control policies that can influence agent operating dynamics:
+Its credible core is the agent's own operating state. The runtime observes
+execution telemetry and converts it into control policy:
 
-- reasoning depth
-- planning horizon
-- memory retrieval
+```text
+Agent execution telemetry
+  -> Operating signals
+  -> Operating state
+  -> Operating policy
+  -> Agent loop / adapter
+```
+
+Operating signals are observable facts, not inferred feelings:
+
+- tool success or tool error
+- retry
+- validation pass or validation fail
+- retrieval hit or retrieval miss
+- progress or stall
+- low or high self-reported confidence
+
+The operating policy can affect:
+
+- whether the loop should proceed, verify, replan, escalate, or abort
+- retry budget
+- verification and human-confirmation gates
+- planning horizon and max steps
 - tool-use threshold
-- response pacing
-- risk posture
-- execution threshold
+- autonomy
 
 Core idea:
 
 > Emotion is not expression. Emotion is runtime resource allocation.
 
-## Pipeline
-
-```text
-User Input
-  -> Emotion Analyzer
-  -> Affective State Manager
-  -> Runtime Policy Mapper
-  -> Agent Adapter
-  -> LLM Agent Runtime
-```
-
 ## MVP Scope
 
-The first version focuses on:
+The current core is:
 
 ```text
-Emotion Signal
--> Affective State
--> Runtime Policy
+AgentSignal
+-> OperatingState
+-> OperatingPolicy
 ```
 
-The default analyzer is `TransformerEmotionAnalyzer`, powered by Transformers.js and a local ONNX text-classification model.
+`AgentRuntime` owns this loop state and exposes `observe`, `decide`, and `tick`.
+Hard control decisions such as `abort` and `escalate` should come from this
+agent telemetry path.
+
+The user-affect path still exists, but it is optional and lower authority:
+
+```text
+User message
+  -> Emotion analyzer
+  -> AffectiveState
+  -> RuntimePolicy / external caution signal
+```
+
+User affect may make the agent slower, more careful, more confirmatory, or more
+supportive. It must not be the sole source for hard stop decisions.
+
+## Local Model Path
+
+The optional affect analyzer uses `TransformerEmotionAnalyzer`, powered by
+Transformers.js and local ONNX text-classification models.
 
 The current default model is:
 
@@ -45,22 +72,30 @@ The current default model is:
 onnx-community/tanaos-emotion-detection-v1-ONNX
 ```
 
-It is an ONNX text emotion classifier usable with Transformers.js. The analyzer maps model labels into amotion's runtime dimensions.
-
-For richer fine-grained classification, the analyzer can be configured with GoEmotions-style ONNX models such as:
+For richer fine-grained classification, the analyzer can be configured with
+GoEmotions-style ONNX models such as:
 
 ```text
 SamLowe/roberta-base-go_emotions-onnx
 ```
 
-`RuleAnalyzer` is retained only as a fallback when a local model cannot be loaded.
+`RuleAnalyzer` is retained only as a fallback when a local model cannot be
+loaded.
 
-## Local Model Path
+Provider LLM and local LLM integrations should stay outside the default core
+dependency graph.
 
-The local inference path is privacy-preserving by default:
+## Evaluation
 
-- Transformers.js for browser and Node.js transformer pipelines backed by ONNX Runtime.
-- ONNX Runtime Mobile for on-device inference on iOS and Android.
-- GoEmotions-style or DistilRoBERTa-style emotion classifiers as local affect estimators.
+Evaluation has two tracks:
 
-Provider LLM and local LLM integrations should stay outside the default core dependency graph.
+- Primary: operating trace -> `AgentRuntime` -> `OperatingPolicy`
+- Secondary: user message -> affect analyzer -> `RuntimePolicy`
+
+The benchmark should prove that an operating-state-aware agent wastes fewer
+steps, avoids blind retry loops, verifies under uncertainty, and does not
+over-abort healthy runs.
+
+The current strategy is documented in [`EVALUATION.md`](./EVALUATION.md). The
+implementation sketch lives in [`docs/EVAL_DESIGN.md`](./docs/EVAL_DESIGN.md),
+with fixture and runner sketches in [`evals/`](./evals/).

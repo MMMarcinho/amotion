@@ -90,21 +90,23 @@ conformance rate.
 
 ## Layer 4 — End-to-end behavioral A/B (the core claim)
 
-Controlled comparison on a **paired scenario suite**: the same underlying task
-presented with different emotional framing (e.g. a calm request vs. the same
-request under visible panic).
+Controlled comparison on a **paired operating scenario suite**: the same
+underlying agent task run with and without `AgentRuntime` governing the loop.
+The primary scenarios are doomed tool calls, repeated validation failures,
+retrieval misses, stalls, recoverable transient failures, and healthy runs that
+should not be interrupted.
 
-- **Arms.** affect-aware policy vs. **fixed-neutral-policy control** (and
-  optionally a no-policy arm). Same model, same task, N runs each.
-- **Metrics.** task success rate; tool-call / step efficiency; **safety**
-  (confirmation rate under high stress / low trust); appropriateness
-  (LLM-judge or human rating).
+- **Arms.** operating-runtime-governed agent vs. blind control loop. Optional
+  later arms: fixed-neutral-policy control and user-affect caution ablation.
+- **Metrics.** task success rate; step efficiency; wasted tool calls; correct
+  verify / replan / escalate / abort rate; over-abort rate on healthy runs;
+  human-confirmation appropriateness for irreversible actions.
 - **Reporting.** Effect sizes with confidence intervals and significance
   across runs — never single anecdotes.
 
-The hypothesis worth falsifying: affect-aware agents are *safer and more
-appropriate under negative affect* without losing task success under neutral
-affect.
+The hypothesis worth falsifying: operating-state-aware agents are *safer and
+more efficient than blind loops* without losing task success or over-aborting
+healthy runs.
 
 ## Layer 5 — Multi-turn trajectories
 

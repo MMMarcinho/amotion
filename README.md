@@ -164,6 +164,18 @@ pnpm --filter @amotion/basic-node dev
 pnpm --filter @amotion/playground dev
 ```
 
+## Evaluation Design
+
+The primary evaluation plan lives in [EVALUATION.md](./EVALUATION.md).
+The implementation sketch lives in [docs/EVAL_DESIGN.md](./docs/EVAL_DESIGN.md).
+
+It separates two questions:
+
+- whether operating telemetry produces the right control decisions
+- whether optional user-affect signals produce useful caution adjustments
+
+The executable trace replay harness and sample fixtures live in [evals/](./evals/).
+
 ## MVP Non-goals
 
 - clinical emotion diagnosis
@@ -174,9 +186,10 @@ pnpm --filter @amotion/playground dev
 
 ## Roadmap
 
-- v0.1: Core schema, Transformers.js analyzer, StateManager, PolicyMapper, PromptAdapter, basic Node example.
-- v0.2: React playground, policy visualization, configurable mapping rules.
-- v0.3: Configurable local transformer model registry and benchmark fixtures.
-- v0.4: Local LLM analyzer with Ollama-style adapters.
-- v0.5: Provider LLM analyzers.
-- v1.0: Stable runtime policy interface, framework adapters, benchmark demo, paper-ready experiments.
+See [ROADMAP.md](./ROADMAP.md) for the full plan.
+
+- v0.2: finish the agent operating runtime and document every control decision.
+- v0.3: add trace replay, eval fixtures, and the `@amotion/eval` scaffold.
+- v0.4: ship a real agent adapter that consumes `OperatingPolicy`.
+- v0.5: run end-to-end A/B experiments against blind control loops.
+- v1.0: freeze the public runtime interfaces and publish benchmark results.

@@ -29,6 +29,18 @@ deferred to v1.0. See [EVALUATION.md](./EVALUATION.md).
   scenario tests, and a runnable naive-vs-governed demo (`examples/agent-loop`).
   User-affect repositioned as an optional external signal.
 
+## Immediate Work Items
+
+These are the next things to assign.
+
+1. Finish reducer tests: prove decay, convergence to rest, and recovery after a rough run. (**Person B done**)
+2. Document the operating-state schema: define every signal, state field, threshold, and control decision in plain language.
+3. Build trace replay: feed a saved signal timeline into `AgentRuntime` and assert the expected policy timeline. (**Person B done**)
+4. Create operating fixtures: doomed loop, transient failure, retrieval miss, validation failure, stall, recovery, and healthy run. (**Person B done**)
+5. Build a real adapter helper: make `OperatingPolicy` actually stop, verify, replan, escalate, and require confirmation in an agent loop. (**Person B prototype done**)
+6. Separate user-affect evals from operating-runtime evals: user affect is a caution modifier, not the core proof. (**Person B done**)
+7. Define v1 public contracts: decide what must stay stable in `AgentSignal`, `OperatingState`, `OperatingPolicy`, and `RuntimePolicy`.
+
 ## v0.2 — Agent operating runtime + configurability
 
 Establish the credible core and lock its behavior with deterministic tests.
@@ -45,19 +57,20 @@ Establish the credible core and lock its behavior with deterministic tests.
       v0.1 behavior exactly).
 - [x] Property tests for the user-affect mapper: range invariants, monotonic
       relationships, and golden archetype snapshots.
-- [ ] Property tests for the operating-state reducer: convergence to rest,
+- [x] Property tests for the operating-state reducer: convergence to rest,
       decay, recovery semantics under long runs.
-- [ ] Executable adapter: map `OperatingPolicy` onto a real agent loop helper.
+- [x] Executable adapter: map `OperatingPolicy` onto a real agent loop helper.
 - [ ] Document the operating-state schema and each decision's rationale.
 
 ## v0.3 — Eval scaffold & signal fidelity
 
 Stand up measurement for both tracks.
 
-- [ ] `@amotion/eval` package scaffold (fixture loader, metrics, reporter).
-- [ ] Trace replay harness: feed recorded agent traces (signal sequences)
+- [x] `@amotion/eval` package scaffold with sample fixtures, trace replay,
+      and structured scores.
+- [x] Trace replay harness: feed recorded agent traces (signal sequences)
       through `AgentRuntime` and assert the decision timeline.
-- [ ] Versioned scenario fixtures for operating-state behavior.
+- [x] Initial scenario fixtures for operating-state behavior.
 - [ ] External signal: configurable model registry, labeled corpus, analyzer
       accuracy (per-label F1) and VAD-correlation vs. EmoBank, calibration.
 
@@ -85,7 +98,8 @@ Test the core claim with controlled comparisons.
 
 ## v1.0 — Stable interface & reproducible experiments
 
-- [ ] Versioned, frozen `RuntimePolicy` schema.
+- [ ] Versioned, frozen `AgentSignal`, `OperatingState`, `OperatingPolicy`,
+      and `RuntimePolicy` schemas.
 - [ ] Public benchmark report with ablations (rule vs. transformer analyzer,
       with/without state smoothing, neutral control).
 - [ ] Paper-ready experiment package.
