@@ -234,6 +234,31 @@ corepack pnpm --filter @amotion/adapters-langgraph build
 
 ---
 
+## 9b. Full A/B bench harness (`@amotion/bench`)
+
+A tau-bench-style task battery comparing a naive loop vs. an operating-runtime-
+governed loop, with a held-out `report` split.
+
+Deterministic assertions (CI-safe, no network):
+
+```sh
+corepack pnpm --filter @amotion/bench test
+```
+**Expected:** `Tests 8 passed (8)`.
+
+Printed comparison tables (build core once so the script can resolve `amotion`):
+
+```sh
+corepack pnpm --filter amotion build
+corepack pnpm --filter @amotion/bench dev
+```
+
+**Expected highlights on the held-out `report` set:** `success regression rate
+0%`, `over-abort rate 0%`, `avoided tool calls (avg)` ~12, governed
+`step-exhaustion rate 0%`. The `calibration` set deliberately shows a non-zero
+over-abort rate — that is the set where thresholds would be tuned, kept
+separate so the reported numbers stay honest.
+
 ## 10. Troubleshooting
 
 - **`pnpm: command not found`** → run `corepack enable` (step 0), or install
