@@ -22,17 +22,22 @@ export type { LangGraphRouteMap } from "./routing";
 
 export {
   createConfirmationInterruptPayload,
-  shouldInterruptForConfirmation
+  createEscalationInterruptPayload,
+  shouldInterruptForConfirmation,
+  shouldInterruptForEscalation
 } from "./interrupt";
 export type {
   ConfirmationInterruptPayload,
+  EscalationInterruptPayload,
   IrreversibleActionAnnotation
 } from "./interrupt";
 
 export {
   bestEffortRetrySignal,
   observeToolCall,
+  signalFromRetrieval,
   signalFromToolObservation,
+  signalFromValidation,
   userSuppliedSignal
 } from "./signals";
 export type { ToolObservation } from "./signals";

@@ -44,6 +44,26 @@ export async function observeToolCall<T>(
   }
 }
 
+export function signalFromValidation(
+  result: { passed: boolean; note?: string; weight?: number }
+): AgentSignal {
+  return {
+    type: result.passed ? "validation_pass" : "validation_fail",
+    note: result.note,
+    weight: result.weight
+  };
+}
+
+export function signalFromRetrieval(
+  result: { hits: number; note?: string; weight?: number }
+): AgentSignal {
+  return {
+    type: result.hits > 0 ? "retrieval_hit" : "retrieval_miss",
+    note: result.note,
+    weight: result.weight
+  };
+}
+
 export function userSuppliedSignal(signal: AgentSignal): AgentSignal {
   return signal;
 }

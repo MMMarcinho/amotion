@@ -1,18 +1,36 @@
 import { describe, expect, it } from "vitest";
+import type { OperatingPolicy } from "amotion";
 import {
   appendOperatingSignal,
   bestEffortRetrySignal,
   createAmotionLangGraphState,
   createAmotionPolicyNode,
   createConfirmationInterruptPayload,
+  createEscalationInterruptPayload,
   createSignalRecord,
   LANGGRAPH_END,
   mergeAmotionLangGraphState,
   observeToolCall,
   routeByOperatingPolicy,
   shouldInterruptForConfirmation,
-  signalFromToolObservation
+  shouldInterruptForEscalation,
+  signalFromRetrieval,
+  signalFromToolObservation,
+  signalFromValidation
 } from "../src";
+
+const policyOf = (overrides: Partial<OperatingPolicy> = {}): OperatingPolicy => ({
+  control: "proceed",
+  reason: "test",
+  stop: false,
+  retryBudget: 4,
+  requireVerification: false,
+  requireConfirmation: false,
+  planning: { horizon: "medium", maxSteps: 4 },
+  toolUsageThreshold: 0.5,
+  autonomy: 0.5,
+  ...overrides
+});
 
 describe("amotion LangGraph state helpers", () => {
   it("rebuilds runtime from serialized state and consumes pending signals", async () => {
@@ -74,6 +92,30 @@ describe("routing and interrupt helpers", () => {
     }, { replan: "planner" })).toBe("planner");
   });
 
+  it("routes a verification-gated proceed to the verify node", () => {
+    expect(routeByOperatingPolicy(policyOf({ control: "proceed", requireVerification: true }), { verify: "checker" })).toBe(
+      "checker"
+    );
+    // Without the gate, a plain proceed still routes to proceed.
+    expect(routeByOperatingPolicy(policyOf({ control: "proceed" }))).toBe("proceed");
+  });
+
+  it("builds an escalation interrupt payload for escalate policies", () => {
+    const policy = policyOf({ control: "escalate", reason: "stuck with high friction", requireConfirmation: true });
+    expect(shouldInterruptForEscalation(policy)).toBe(true);
+    expect(shouldInterruptForEscalation(policyOf({ control: "proceed" }))).toBe(false);
+
+    const payload = createEscalationInterruptPayload(policy, {
+      recentSignals: [{ type: "tool_error" }, { type: "retry" }]
+    });
+    expect(payload).toMatchObject({
+      type: "amotion.escalation_required",
+      reason: "stuck with high friction",
+      policy: { control: "escalate", retryBudget: 4 }
+    });
+    expect(payload.recentSignals).toHaveLength(2);
+  });
+
   it("requires explicit irreversible action annotation before confirmation interrupt", () => {
     const policy = {
       control: "proceed" as const,
@@ -119,5 +161,15 @@ describe("signal helpers", () => {
   it("keeps retry detection explicit and best-effort", () => {
     expect(bestEffortRetrySignal("search:q", "search:q")).toMatchObject({ type: "retry" });
     expect(bestEffortRetrySignal("search:q", "read:file")).toBeUndefined();
+  });
+
+  it("maps validation and retrieval outcomes to observable signals", () => {
+    expect(signalFromValidation({ passed: true })).toMatchObject({ type: "validation_pass" });
+    expect(signalFromValidation({ passed: false, note: "2 tests failed" })).toMatchObject({
+      type: "validation_fail",
+      note: "2 tests failed"
+    });
+    expect(signalFromRetrieval({ hits: 3 })).toMatchObject({ type: "retrieval_hit" });
+    expect(signalFromRetrieval({ hits: 0 })).toMatchObject({ type: "retrieval_miss" });
   });
 });

@@ -24,5 +24,8 @@ export function routeByOperatingPolicy(
 ): string {
   const routeMap = { ...DEFAULT_LANGGRAPH_ROUTES, ...routes };
   if (policy.stop) return routeMap.abort;
+  // `requireVerification` is a gating control: it preempts a plain "proceed"
+  // so a verification step runs before the next action commits.
+  if (policy.control === "proceed" && policy.requireVerification) return routeMap.verify;
   return routeMap[policy.control];
 }
