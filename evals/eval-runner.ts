@@ -100,7 +100,8 @@ function scoreOperatingTimeline(testCase: OperatingEvalCase, steps: OperatingRep
 }
 
 export function replayOperatingCase(testCase: OperatingEvalCase): OperatingReplayResult {
-  const runtime = new AgentRuntime();
+  const runtime = new AgentRuntime(testCase.config ? { config: testCase.config } : undefined);
+  if (testCase.affect) runtime.setExternalAffect(testCase.affect);
   const steps: OperatingReplayStep[] = [];
 
   for (let i = 0; i < testCase.signals.length; i += 1) {

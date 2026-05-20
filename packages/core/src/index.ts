@@ -37,12 +37,10 @@ export { DEFAULT_OPERATING_CONFIG } from "./agent/operating-config";
 export type { OperatingConfig, SignalEffect } from "./agent/operating-config";
 export type { AgentSignal, AgentSignalType, ExternalAffectSignal } from "./agent/signals";
 export type {
-  ExpectedFinal,
-  ExpectedStep,
+  ExpectedOperatingFinal,
+  ExpectedOperatingStep,
   OperatingEvalCase,
-  OperatingEvalFailure,
-  OperatingEvalReport,
-  OperatingEvalStepResult,
+  OperatingEvalDomain,
   OperatingStateDimension,
   Range
 } from "./agent/eval-contract";

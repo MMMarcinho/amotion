@@ -180,8 +180,10 @@ These are the spots where the intuitive assumption is wrong:
 
 ## Evaluation contract
 
-The trace-replay shape is fixed in `eval-contract.ts` (`OperatingEvalCase`,
-`ExpectedStep`, `ExpectedFinal`, `OperatingEvalReport`). The runner that
-consumes it and the fixtures belong to the eval track (`@amotion/eval`) and are
-implemented by Person B. Policy is sampled **after** each signal is observed:
-the policy at index `i` reflects signals `0..i` inclusive.
+The trace-replay case shape is canonical in `eval-contract.ts`
+(`OperatingEvalCase`, `ExpectedOperatingStep`, `ExpectedOperatingFinal`). The
+runner that consumes it, its result/score shapes, and the fixtures live in the
+eval track (`evals/`, Person B), which imports these types from `amotion`
+rather than redefining them. Policy is sampled **after** each signal is
+observed, and `step` is **1-based** — `step: 3` asserts the policy after the
+third signal (signals `1..3` inclusive).

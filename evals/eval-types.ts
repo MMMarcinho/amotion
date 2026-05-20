@@ -1,6 +1,22 @@
-import type { AgentSignal, EmotionIntent, OperatingPolicy, OperatingState, RuntimePolicy } from "amotion";
+import type {
+  AgentSignal,
+  EmotionIntent,
+  OperatingPolicy,
+  OperatingState,
+  Range,
+  RuntimePolicy
+} from "amotion";
 
-export type OperatingEvalDomain = "coding" | "research" | "tool-use" | "planning" | "general";
+// The operating eval-case contract is canonical in `amotion` (Person A
+// boundary). Re-export it here so fixtures and the runner have one definition.
+export type {
+  ExpectedOperatingFinal,
+  ExpectedOperatingStep,
+  OperatingEvalCase,
+  OperatingEvalDomain,
+  Range
+} from "amotion";
+
 export type EvalLocale = "zh-CN" | "en-US" | "mixed";
 export type EvalDomain = "coding" | "planning" | "decision" | "support" | "general";
 export type SignalDimension =
@@ -10,34 +26,6 @@ export type SignalDimension =
   | "trust"
   | "arousal"
   | "dominance";
-
-export type Range = [min: number, max: number];
-
-export type OperatingEvalCase = {
-  id: string;
-  domain: OperatingEvalDomain;
-  signals: AgentSignal[];
-  expectedTimeline?: Array<{
-    step: number;
-    control?: OperatingPolicy["control"];
-    stop?: boolean;
-    requireVerification?: boolean;
-    requireConfirmation?: boolean;
-    retryBudget?: Range;
-    autonomy?: Range;
-  }>;
-  expectedFinal?: {
-    control?: OperatingPolicy["control"];
-    stop?: boolean;
-    requireVerification?: boolean;
-    requireConfirmation?: boolean;
-    retryBudget?: Range;
-    autonomy?: Range;
-    maxSteps?: Range;
-  };
-  tags: string[];
-  notes?: string;
-};
 
 export type AffectEvalCase = {
   id: string;

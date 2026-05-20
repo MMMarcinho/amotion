@@ -26,7 +26,7 @@ dependency on the affect path, local models, or Hugging Face downloads.
 | `AgentRuntime` methods (`observe`, `decide`, `tick`, `reset`, `state`) | **Stable candidate** | Method surface frozen; return *values* may gain fields additively. |
 | `AgentSignalType` union | **Stable candidate** | New signal types are additive/minor; removal/rename is major. |
 | `AgentSignal` shape (`type`, `weight`, `confidence`, `note`) | **Stable candidate** | New optional fields are additive. |
-| `OperatingEvalCase` / `ExpectedStep` / `ExpectedFinal` / `OperatingEvalReport` | **Stable candidate** | The eval contract; B builds the runner against this. |
+| `OperatingEvalCase` / `ExpectedOperatingStep` / `ExpectedOperatingFinal` | **Stable candidate** | Canonical eval-case contract in core; the `evals/` runner imports it. Runner result/score shapes are eval-package-owned, not core contract. |
 | `OperatingPolicy` advisory fields (`retryBudget`, `autonomy`, `toolUsageThreshold`, `planning.*`) | **Experimental** | Hints; scales and formulas may be recalibrated. |
 | `OperatingState` numeric dimensions & scales | **Experimental** | Smoothed values may be recalibrated; assert ranges, not points. |
 | `OperatingState` counters (`consecutiveFailures`, `stepCount`, `budgetUsed`) | **Stable candidate** | Exact semantics are contractual. |
