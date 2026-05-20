@@ -1,0 +1,860 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>amotion evaluation flow</title>
+    <style>
+      :root {
+        color: #17211d;
+        background: #f5f2eb;
+        font-family:
+          Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+          "Segoe UI", sans-serif;
+        font-synthesis: none;
+        text-rendering: optimizeLegibility;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100svh;
+        background:
+          linear-gradient(90deg, rgba(23, 33, 29, 0.055) 1px, transparent 1px),
+          linear-gradient(180deg, rgba(23, 33, 29, 0.05) 1px, transparent 1px),
+          #f5f2eb;
+        background-size: 34px 34px;
+      }
+
+      button,
+      input,
+      select {
+        font: inherit;
+      }
+
+      .shell {
+        display: grid;
+        grid-template-columns: 280px minmax(0, 1fr) 340px;
+        gap: 22px;
+        min-height: 100svh;
+        padding: 22px;
+      }
+
+      .rail,
+      .inspector {
+        min-width: 0;
+        border-right: 1px solid rgba(23, 33, 29, 0.16);
+        padding-right: 22px;
+      }
+
+      .inspector {
+        border-right: 0;
+        border-left: 1px solid rgba(23, 33, 29, 0.16);
+        padding-right: 0;
+        padding-left: 22px;
+      }
+
+      .brand {
+        display: grid;
+        gap: 8px;
+        border-bottom: 1px solid rgba(23, 33, 29, 0.2);
+        padding-bottom: 18px;
+      }
+
+      .brand h1 {
+        margin: 0;
+        font-size: 34px;
+        line-height: 1;
+        letter-spacing: 0;
+      }
+
+      .brand p,
+      .muted {
+        margin: 0;
+        color: #58645f;
+        font-size: 13px;
+        line-height: 1.45;
+      }
+
+      .sectionTitle {
+        margin: 22px 0 10px;
+        color: #58645f;
+        font-size: 12px;
+        font-weight: 760;
+        letter-spacing: 0;
+        text-transform: uppercase;
+      }
+
+      .layerList,
+      .caseList {
+        display: grid;
+        gap: 8px;
+      }
+
+      .layerButton,
+      .caseButton,
+      .toggleButton {
+        width: 100%;
+        border: 1px solid rgba(23, 33, 29, 0.2);
+        border-radius: 7px;
+        padding: 10px 11px;
+        color: #17211d;
+        background: rgba(255, 255, 255, 0.56);
+        text-align: left;
+        cursor: pointer;
+        transition:
+          border-color 160ms ease,
+          background 160ms ease,
+          transform 160ms ease;
+      }
+
+      .layerButton:hover,
+      .caseButton:hover,
+      .toggleButton:hover {
+        border-color: rgba(24, 112, 88, 0.5);
+        transform: translateY(-1px);
+      }
+
+      .layerButton.active,
+      .caseButton.active,
+      .toggleButton.active {
+        border-color: rgba(24, 112, 88, 0.72);
+        background: rgba(24, 112, 88, 0.1);
+      }
+
+      .layerButton strong,
+      .caseButton strong {
+        display: block;
+        font-size: 13px;
+        line-height: 1.25;
+      }
+
+      .layerButton span,
+      .caseButton span {
+        display: block;
+        margin-top: 4px;
+        color: #65716b;
+        font-size: 12px;
+        line-height: 1.35;
+      }
+
+      .main {
+        min-width: 0;
+        padding: 2px 0 8px;
+      }
+
+      .toolbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        border-bottom: 1px solid rgba(23, 33, 29, 0.2);
+        padding-bottom: 16px;
+      }
+
+      .toolbar h2 {
+        margin: 0;
+        font-size: 28px;
+        line-height: 1.1;
+        letter-spacing: 0;
+      }
+
+      .viewToggle {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(88px, 1fr));
+        gap: 7px;
+        min-width: 300px;
+      }
+
+      .toggleButton {
+        padding: 8px 10px;
+        text-align: center;
+        font-size: 12px;
+        font-weight: 700;
+      }
+
+      .flow {
+        display: grid;
+        grid-template-columns: repeat(5, minmax(130px, 1fr));
+        gap: 12px;
+        margin-top: 22px;
+      }
+
+      .node {
+        position: relative;
+        min-height: 148px;
+        border: 1px solid rgba(23, 33, 29, 0.18);
+        border-radius: 8px;
+        padding: 14px;
+        background: rgba(255, 255, 255, 0.62);
+        overflow: hidden;
+        cursor: pointer;
+      }
+
+      .node.active {
+        border-color: rgba(24, 112, 88, 0.78);
+        box-shadow: inset 0 -4px 0 rgba(24, 112, 88, 0.22);
+      }
+
+      .node::after {
+        content: "";
+        position: absolute;
+        right: -17px;
+        top: 50%;
+        width: 28px;
+        height: 1px;
+        background: rgba(23, 33, 29, 0.35);
+      }
+
+      .node:last-child::after {
+        display: none;
+      }
+
+      .node small {
+        color: #65716b;
+        font-size: 11px;
+        font-weight: 760;
+        text-transform: uppercase;
+      }
+
+      .node h3 {
+        margin: 8px 0 8px;
+        font-size: 18px;
+        line-height: 1.18;
+      }
+
+      .node p {
+        margin: 0;
+        color: #4e5b55;
+        font-size: 12px;
+        line-height: 1.45;
+      }
+
+      .nodeMetric {
+        position: absolute;
+        right: 12px;
+        bottom: 11px;
+        color: #187058;
+        font-size: 22px;
+        font-weight: 780;
+        font-variant-numeric: tabular-nums;
+      }
+
+      .workbench {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 18px;
+        margin-top: 22px;
+      }
+
+      .panel {
+        min-width: 0;
+        border-top: 1px solid rgba(23, 33, 29, 0.2);
+        padding-top: 14px;
+      }
+
+      .panel h3,
+      .inspector h3 {
+        margin: 0 0 10px;
+        color: #26342f;
+        font-size: 15px;
+      }
+
+      .messageBox {
+        min-height: 106px;
+        border: 1px solid rgba(23, 33, 29, 0.18);
+        border-radius: 8px;
+        padding: 13px;
+        background: rgba(255, 255, 255, 0.58);
+        color: #17211d;
+        font-size: 15px;
+        line-height: 1.55;
+      }
+
+      .metricGrid {
+        display: grid;
+        gap: 11px;
+      }
+
+      .metric {
+        display: grid;
+        gap: 6px;
+      }
+
+      .metricLabel {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        color: #3f4d47;
+        font-size: 12px;
+        font-weight: 720;
+      }
+
+      .track {
+        height: 9px;
+        overflow: hidden;
+        border-radius: 99px;
+        background: rgba(23, 33, 29, 0.14);
+      }
+
+      .fill {
+        height: 100%;
+        border-radius: inherit;
+        background: #187058;
+        transition: width 220ms ease;
+      }
+
+      .policyList {
+        display: grid;
+        gap: 9px;
+      }
+
+      .policyRow {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        border-bottom: 1px solid rgba(23, 33, 29, 0.11);
+        padding-bottom: 8px;
+        font-size: 13px;
+      }
+
+      .policyRow span {
+        color: #58645f;
+      }
+
+      .policyRow strong {
+        color: #17211d;
+        text-align: right;
+      }
+
+      .scoreBand {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 10px;
+        margin-top: 20px;
+      }
+
+      .score {
+        border: 1px solid rgba(23, 33, 29, 0.16);
+        border-radius: 8px;
+        padding: 12px;
+        background: rgba(255, 255, 255, 0.48);
+      }
+
+      .score span {
+        display: block;
+        color: #65716b;
+        font-size: 11px;
+        font-weight: 760;
+        text-transform: uppercase;
+      }
+
+      .score strong {
+        display: block;
+        margin-top: 7px;
+        color: #187058;
+        font-size: 28px;
+        line-height: 1;
+        font-variant-numeric: tabular-nums;
+      }
+
+      .detailText {
+        min-height: 174px;
+        border: 1px solid rgba(23, 33, 29, 0.16);
+        border-radius: 8px;
+        padding: 13px;
+        background: rgba(255, 255, 255, 0.55);
+        color: #3f4d47;
+        font-size: 13px;
+        line-height: 1.55;
+        white-space: pre-wrap;
+      }
+
+      .phaseList {
+        display: grid;
+        gap: 10px;
+      }
+
+      .phase {
+        display: grid;
+        grid-template-columns: 24px 1fr;
+        gap: 10px;
+        align-items: start;
+      }
+
+      .phase mark {
+        display: grid;
+        place-items: center;
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        color: #fff;
+        background: #187058;
+        font-size: 12px;
+        font-weight: 800;
+      }
+
+      .phase strong {
+        display: block;
+        font-size: 13px;
+      }
+
+      .phase span {
+        display: block;
+        margin-top: 2px;
+        color: #65716b;
+        font-size: 12px;
+        line-height: 1.4;
+      }
+
+      @media (max-width: 1120px) {
+        .shell {
+          grid-template-columns: 1fr;
+        }
+
+        .rail,
+        .inspector {
+          border: 0;
+          padding: 0;
+        }
+
+        .flow,
+        .workbench {
+          grid-template-columns: 1fr;
+        }
+
+        .node::after {
+          display: none;
+        }
+
+        .toolbar {
+          align-items: stretch;
+          flex-direction: column;
+        }
+
+        .viewToggle {
+          min-width: 0;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="shell">
+      <aside class="rail">
+        <header class="brand">
+          <h1>amotion eval</h1>
+          <p>三层 analyzer 与 runtime policy 的可视化测评设计。</p>
+        </header>
+
+        <div class="sectionTitle">Analyzer Layer</div>
+        <div class="layerList" id="layerList"></div>
+
+        <div class="sectionTitle">Fixture Case</div>
+        <div class="caseList" id="caseList"></div>
+      </aside>
+
+      <section class="main">
+        <div class="toolbar">
+          <div>
+            <h2 id="caseTitle">Evaluation Flow</h2>
+            <p class="muted" id="caseSubtitle">message -> signal -> state -> policy -> adapter</p>
+          </div>
+          <div class="viewToggle" id="viewToggle"></div>
+        </div>
+
+        <section class="flow" id="flow"></section>
+
+        <section class="scoreBand">
+          <div class="score">
+            <span>Signal Score</span>
+            <strong id="signalScore">0.00</strong>
+          </div>
+          <div class="score">
+            <span>Policy Score</span>
+            <strong id="policyScore">0.00</strong>
+          </div>
+          <div class="score">
+            <span>Latency Budget</span>
+            <strong id="latencyScore">0ms</strong>
+          </div>
+        </section>
+
+        <section class="workbench">
+          <div class="panel">
+            <h3>User Message</h3>
+            <div class="messageBox" id="messageBox"></div>
+          </div>
+
+          <div class="panel">
+            <h3>Expected Signal Ranges</h3>
+            <div class="metricGrid" id="signalMetrics"></div>
+          </div>
+
+          <div class="panel">
+            <h3>Expected Runtime Policy</h3>
+            <div class="policyList" id="policyList"></div>
+          </div>
+
+          <div class="panel">
+            <h3>Evaluation Assertion</h3>
+            <div class="detailText" id="assertionText"></div>
+          </div>
+        </section>
+      </section>
+
+      <aside class="inspector">
+        <div class="sectionTitle">Selected Stage</div>
+        <h3 id="stageTitle"></h3>
+        <div class="detailText" id="stageDetail"></div>
+
+        <div class="sectionTitle">Review Protocol</div>
+        <div class="phaseList">
+          <div class="phase">
+            <mark>1</mark>
+            <div>
+              <strong>Annotate signal</strong>
+              <span>用范围标注 stress、uncertainty、engagement、trust 等维度。</span>
+            </div>
+          </div>
+          <div class="phase">
+            <mark>2</mark>
+            <div>
+              <strong>Assert policy</strong>
+              <span>检查 policy 是否产生正确的推理深度、规划跨度和风险姿态。</span>
+            </div>
+          </div>
+          <div class="phase">
+            <mark>3</mark>
+            <div>
+              <strong>Compare layers</strong>
+              <span>同一 fixture 横向比较 local transformer、local LLM、provider LLM。</span>
+            </div>
+          </div>
+        </div>
+      </aside>
+    </main>
+
+    <script>
+      const layers = [
+        {
+          id: "transformer",
+          name: "Layer 1: Local Transformer",
+          desc: "Transformers.js + ONNX，本地、快速、隐私优先。",
+          signal: 0.78,
+          policy: 0.76,
+          latency: "80ms"
+        },
+        {
+          id: "local-llm",
+          name: "Layer 2: Local LLM",
+          desc: "Ollama / llama.cpp / LM Studio，语义更强，依赖硬件。",
+          signal: 0.84,
+          policy: 0.82,
+          latency: "900ms"
+        },
+        {
+          id: "provider-llm",
+          name: "Layer 3: Provider LLM",
+          desc: "OpenAI / Anthropic / Gemini，高质量 fallback，有成本和隐私权衡。",
+          signal: 0.9,
+          policy: 0.88,
+          latency: "1.6s"
+        },
+        {
+          id: "rule",
+          name: "Fallback: Rule Baseline",
+          desc: "无模型可用时的可解释后备，不作为主评测目标。",
+          signal: 0.48,
+          policy: 0.58,
+          latency: "2ms"
+        }
+      ];
+
+      const cases = [
+        {
+          id: "zh-high-stress-helpless-001",
+          title: "高压力 / 低掌控",
+          domain: "support",
+          message: "我现在真的有点崩溃，不知道该怎么办",
+          signal: {
+            stress: [0.7, 1],
+            engagement: [0, 0.65],
+            dominance: [0, 0.45],
+            valence: [-1, -0.2]
+          },
+          policy: {
+            "reasoning.depth": "low",
+            "planning.horizon": "short",
+            "memory.retrievalMode": "supportive",
+            "interaction.verbosity": "low",
+            "risk.posture": "conservative",
+            "tools.requireConfirmation": "true",
+            "interaction.optionCount": "1-2"
+          },
+          assertion:
+            "目标行为：不要拉长推理链，不要给太多选项，不主动执行高风险动作。agent 应降低 cognitive load，采用短规划、低 verbosity、保守风险姿态。"
+        },
+        {
+          id: "zh-uncertainty-risk-001",
+          title: "高不确定 / 风险担忧",
+          domain: "decision",
+          message: "你确定吗？我感觉这个方案风险很大",
+          signal: {
+            uncertainty: [0.55, 1],
+            stress: [0.15, 0.75],
+            valence: [-1, 0.2]
+          },
+          policy: {
+            "reasoning.verification": "high",
+            "tools.externalSearchBias": "high",
+            "interaction.clarificationBias": "high",
+            "risk.posture": "conservative"
+          },
+          assertion:
+            "目标行为：提高验证和澄清倾向，降低直接行动概率。此类 case 用来确认 uncertainty 能被转换为 verification，而不是被误当成普通负面情绪。"
+        },
+        {
+          id: "en-high-engagement-build-001",
+          title: "高投入 / 架构规划",
+          domain: "coding",
+          message:
+            "I want to seriously plan this open-source project and explore the architecture tradeoffs.",
+          signal: {
+            engagement: [0.55, 1],
+            stress: [0, 0.4],
+            trust: [0.35, 1],
+            valence: [-0.2, 1]
+          },
+          policy: {
+            "reasoning.depth": "high",
+            "planning.horizon": "long",
+            "planning.maxSteps": "5-8",
+            "memory.retrievalMode": "exploratory",
+            "interaction.optionCount": "3-4"
+          },
+          assertion:
+            "目标行为：扩大规划跨度和探索半径，允许更多方案分支。这个 case 用来确认 engagement 驱动的是资源投入，而不是情绪化表达。"
+        },
+        {
+          id: "mixed-low-trust-001",
+          title: "低信任 / 证据要求",
+          domain: "general",
+          message: "你别直接下结论，show me evidence first，我担心你会瞎编。",
+          signal: {
+            trust: [0, 0.38],
+            uncertainty: [0.45, 1],
+            stress: [0.1, 0.65]
+          },
+          policy: {
+            "tools.requireConfirmation": "true",
+            "memory.writePriority": "low",
+            "interaction.verbosity": "low-medium",
+            "risk.posture": "conservative"
+          },
+          assertion:
+            "目标行为：解释行为边界，避免过度亲密或过度自信，行动前确认。低 trust 应直接影响 autonomy 和 writePriority。"
+        }
+      ];
+
+      const stages = [
+        {
+          id: "input",
+          label: "Input",
+          title: "Optional User Input",
+          desc: "可选 user-affect track 的 message、history、locale、domain。核心 operating track 使用 agent signal trace。",
+          metric: "raw",
+          detail:
+            "评测输入不是孤立句子。后续版本应加入 history、任务类型和用户关系状态，用来测试 state manager 是否会平滑而非瞬间重置。"
+        },
+        {
+          id: "analyzer",
+          label: "Analyze",
+          title: "Affect Analyzer",
+          desc: "三层 analyzer 对同一 affect fixture 产生 EmotionSignal。",
+          metric: "signal",
+          detail:
+            "Layer 1 评估本地 transformer 的速度和隐私。Layer 2/3 评估更深语义理解。Rule baseline 只用来检查 fallback 行为。"
+        },
+        {
+          id: "state",
+          label: "State",
+          title: "Affective State",
+          desc: "把单条 signal 平滑成持续状态，避免策略抖动。",
+          metric: "smooth",
+          detail:
+            "state manager 的评测重点是稳定性：连续输入的小幅波动不应该让 policy 反复跳变，trust 应比 stress 更新更慢。"
+        },
+        {
+          id: "policy",
+          label: "Policy",
+          title: "Runtime Policy",
+          desc: "将 affective state 映射为资源分配策略。",
+          metric: "policy",
+          detail:
+            "policy score 和 signal score 同等重要。一个情绪标签稍有偏差的 analyzer，如果仍能产生正确 runtime policy，可以被视为可用。"
+        },
+        {
+          id: "adapter",
+          label: "Adapter",
+          title: "Agent Adapter",
+          desc: "把 RuntimePolicy 翻译为 prompt hint 或 agent config。",
+          metric: "hint",
+          detail:
+            "adapter 评测检查输出是否稳定、可读、不过度人格化，并且不会覆盖安全和事实准确性要求。"
+        }
+      ];
+
+      const views = [
+        { id: "signal", label: "Signal" },
+        { id: "policy", label: "Policy" },
+        { id: "compare", label: "Compare" }
+      ];
+
+      let selectedLayer = layers[0];
+      let selectedCase = cases[0];
+      let selectedStage = stages[1];
+      let selectedView = views[0];
+
+      const layerList = document.getElementById("layerList");
+      const caseList = document.getElementById("caseList");
+      const viewToggle = document.getElementById("viewToggle");
+      const flow = document.getElementById("flow");
+      const signalMetrics = document.getElementById("signalMetrics");
+      const policyList = document.getElementById("policyList");
+
+      function rangeWidth(range) {
+        const min = Math.max(0, range[0]);
+        const max = Math.min(1, range[1]);
+        return Math.max(4, (max - min) * 100);
+      }
+
+      function renderButtons() {
+        layerList.innerHTML = layers
+          .map(
+            (layer) => `
+              <button class="layerButton ${layer.id === selectedLayer.id ? "active" : ""}" data-layer="${layer.id}">
+                <strong>${layer.name}</strong>
+                <span>${layer.desc}</span>
+              </button>
+            `
+          )
+          .join("");
+
+        caseList.innerHTML = cases
+          .map(
+            (item) => `
+              <button class="caseButton ${item.id === selectedCase.id ? "active" : ""}" data-case="${item.id}">
+                <strong>${item.title}</strong>
+                <span>${item.domain} / ${item.id}</span>
+              </button>
+            `
+          )
+          .join("");
+
+        viewToggle.innerHTML = views
+          .map(
+            (view) => `
+              <button class="toggleButton ${view.id === selectedView.id ? "active" : ""}" data-view="${view.id}">
+                ${view.label}
+              </button>
+            `
+          )
+          .join("");
+      }
+
+      function renderFlow() {
+        flow.innerHTML = stages
+          .map(
+            (stage) => `
+              <article class="node ${stage.id === selectedStage.id ? "active" : ""}" data-stage="${stage.id}">
+                <small>${stage.label}</small>
+                <h3>${stage.title}</h3>
+                <p>${stage.desc}</p>
+                <div class="nodeMetric">${stage.metric}</div>
+              </article>
+            `
+          )
+          .join("");
+      }
+
+      function renderMetrics() {
+        const signalEntries = Object.entries(selectedCase.signal);
+        signalMetrics.innerHTML = signalEntries
+          .map(([name, range]) => {
+            const width = rangeWidth(range);
+            const left = Math.max(0, range[0]) * 100;
+            return `
+              <div class="metric">
+                <div class="metricLabel">
+                  <span>${name}</span>
+                  <strong>${range[0].toFixed(2)} - ${range[1].toFixed(2)}</strong>
+                </div>
+                <div class="track">
+                  <div class="fill" style="width:${width}%; margin-left:${left}%"></div>
+                </div>
+              </div>
+            `;
+          })
+          .join("");
+
+        policyList.innerHTML = Object.entries(selectedCase.policy)
+          .map(
+            ([name, value]) => `
+              <div class="policyRow">
+                <span>${name}</span>
+                <strong>${value}</strong>
+              </div>
+            `
+          )
+          .join("");
+      }
+
+      function renderState() {
+        renderButtons();
+        renderFlow();
+        renderMetrics();
+
+        document.getElementById("caseTitle").textContent = selectedCase.title;
+        document.getElementById("caseSubtitle").textContent =
+          `${selectedLayer.name} / ${selectedView.label} view`;
+        document.getElementById("messageBox").textContent = selectedCase.message;
+        document.getElementById("assertionText").textContent = selectedCase.assertion;
+        document.getElementById("signalScore").textContent = selectedLayer.signal.toFixed(2);
+        document.getElementById("policyScore").textContent = selectedLayer.policy.toFixed(2);
+        document.getElementById("latencyScore").textContent = selectedLayer.latency;
+        document.getElementById("stageTitle").textContent = selectedStage.title;
+        document.getElementById("stageDetail").textContent = selectedStage.detail;
+      }
+
+      document.addEventListener("click", (event) => {
+        const layerButton = event.target.closest("[data-layer]");
+        const caseButton = event.target.closest("[data-case]");
+        const stageButton = event.target.closest("[data-stage]");
+        const viewButton = event.target.closest("[data-view]");
+
+        if (layerButton) {
+          selectedLayer = layers.find((layer) => layer.id === layerButton.dataset.layer);
+          renderState();
+        }
+        if (caseButton) {
+          selectedCase = cases.find((item) => item.id === caseButton.dataset.case);
+          renderState();
+        }
+        if (stageButton) {
+          selectedStage = stages.find((stage) => stage.id === stageButton.dataset.stage);
+          renderState();
+        }
+        if (viewButton) {
+          selectedView = views.find((view) => view.id === viewButton.dataset.view);
+          renderState();
+        }
+      });
+
+      renderState();
+    </script>
+  </body>
+</html>

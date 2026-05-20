@@ -29,6 +29,18 @@ deferred to v1.0. See [EVALUATION.md](./EVALUATION.md).
   scenario tests, and a runnable naive-vs-governed demo (`examples/agent-loop`).
   User-affect repositioned as an optional external signal.
 
+## Immediate Work Items
+
+These are the next things to assign.
+
+1. Finish reducer tests: prove decay, convergence to rest, and recovery after a rough run.
+2. Document the operating-state schema: define every signal, state field, threshold, and control decision in plain language.
+3. Build trace replay: feed a saved signal timeline into `AgentRuntime` and assert the expected policy timeline.
+4. Create operating fixtures: doomed loop, transient failure, retrieval miss, validation failure, stall, recovery, and healthy run.
+5. Build a real adapter helper: make `OperatingPolicy` actually stop, verify, replan, escalate, and require confirmation in an agent loop.
+6. Separate user-affect evals from operating-runtime evals: user affect is a caution modifier, not the core proof.
+7. Define v1 public contracts: decide what must stay stable in `AgentSignal`, `OperatingState`, `OperatingPolicy`, and `RuntimePolicy`.
+
 ## v0.2 — Agent operating runtime + configurability
 
 Establish the credible core and lock its behavior with deterministic tests.
@@ -85,7 +97,8 @@ Test the core claim with controlled comparisons.
 
 ## v1.0 — Stable interface & reproducible experiments
 
-- [ ] Versioned, frozen `RuntimePolicy` schema.
+- [ ] Versioned, frozen `AgentSignal`, `OperatingState`, `OperatingPolicy`,
+      and `RuntimePolicy` schemas.
 - [ ] Public benchmark report with ablations (rule vs. transformer analyzer,
       with/without state smoothing, neutral control).
 - [ ] Paper-ready experiment package.
