@@ -36,3 +36,11 @@ export type { ControlDecision, OperatingPolicy } from "./agent/operating-policy"
 export { DEFAULT_OPERATING_CONFIG } from "./agent/operating-config";
 export type { OperatingConfig, SignalEffect } from "./agent/operating-config";
 export type { AgentSignal, AgentSignalType, ExternalAffectSignal } from "./agent/signals";
+export type {
+  ExpectedOperatingFinal,
+  ExpectedOperatingStep,
+  OperatingEvalCase,
+  OperatingEvalDomain,
+  OperatingStateDimension,
+  Range
+} from "./agent/eval-contract";
