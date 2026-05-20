@@ -174,7 +174,7 @@ It separates two questions:
 - whether operating telemetry produces the right control decisions
 - whether optional user-affect signals produce useful caution adjustments
 
-Fixture and runner sketches live in [evals/](./evals/).
+The executable trace replay harness and sample fixtures live in [evals/](./evals/).
 
 ## MVP Non-goals
 
