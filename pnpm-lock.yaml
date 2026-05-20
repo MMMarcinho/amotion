@@ -88,6 +88,12 @@ importers:
         specifier: workspace:*
         version: link:../core
 
+  packages/adapters-langgraph:
+    dependencies:
+      amotion:
+        specifier: workspace:*
+        version: link:../core
+
   packages/core:
     dependencies:
       '@huggingface/transformers':

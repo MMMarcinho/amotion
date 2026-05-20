@@ -260,6 +260,17 @@ describe("agent runtime control loop", () => {
     expect(rt.state.consecutiveFailures).toBe(0);
   });
 
+  it("clears external affect on reset so caution does not leak across episodes", () => {
+    const rt = new AgentRuntime({
+      initialState: state({ confidence: 0.85, momentum: 0.85, uncertainty: 0.1, friction: 0.05 })
+    });
+    rt.setExternalAffect({ pressure: 1, trust: 0 });
+    expect(rt.decide().requireConfirmation).toBe(true);
+
+    rt.reset();
+    expect(rt.decide().requireConfirmation).toBe(false);
+  });
+
   it("does not over-abort a healthy run", () => {
     const rt = new AgentRuntime();
     const controls = [

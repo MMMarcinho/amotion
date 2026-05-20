@@ -153,6 +153,7 @@ const analyzer = new TransformerEmotionAnalyzer({
 
 - `amotion`: core schema, analyzer, state manager, policy mapper, runtime class, and prompt hint helper.
 - `@amotion/adapters`: framework-neutral adapter helpers for generic agents and future framework integrations.
+- `@amotion/adapters-langgraph`: initial LangGraph-facing operating-policy node, routing, interrupt, signal, and fake-bench helpers.
 
 ## Development
 

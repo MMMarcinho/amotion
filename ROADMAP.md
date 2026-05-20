@@ -60,6 +60,7 @@ Establish the credible core and lock its behavior with deterministic tests.
 - [x] Property tests for the operating-state reducer: convergence to rest,
       decay, recovery semantics under long runs.
 - [x] Executable adapter: map `OperatingPolicy` onto a real agent loop helper.
+- [x] Initial LangGraph-facing adapter helpers with deterministic fake-graph A/B metrics.
 - [ ] Document the operating-state schema and each decision's rationale.
 
 ## v0.3 — Eval scaffold & signal fidelity

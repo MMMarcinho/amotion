@@ -12,7 +12,8 @@
     "baseUrl": ".",
     "paths": {
       "amotion": ["packages/core/src/index.ts"],
-      "@amotion/adapters": ["packages/adapters/src/index.ts"]
+      "@amotion/adapters": ["packages/adapters/src/index.ts"],
+      "@amotion/adapters-langgraph": ["packages/adapters-langgraph/src/index.ts"]
     },
     "resolveJsonModule": true,
     "skipLibCheck": true,
