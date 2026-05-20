@@ -27,3 +27,12 @@ export type {
 } from "./policy/policy-config";
 export { Amotion } from "./runtime/amotion";
 export { policyToSystemHint } from "./prompt-adapter";
+
+export { AgentRuntime } from "./agent/agent-runtime";
+export { createOperatingState, applyAgentSignal } from "./agent/operating-state";
+export type { OperatingState } from "./agent/operating-state";
+export { mapStateToOperatingPolicy } from "./agent/operating-policy";
+export type { ControlDecision, OperatingPolicy } from "./agent/operating-policy";
+export { DEFAULT_OPERATING_CONFIG } from "./agent/operating-config";
+export type { OperatingConfig, SignalEffect } from "./agent/operating-config";
+export type { AgentSignal, AgentSignalType, ExternalAffectSignal } from "./agent/signals";

@@ -1,11 +1,16 @@
 # amotion Evaluation Strategy
 
-How do we know amotion actually helps an agent? The pipeline has four stages
-(Analyzer → State → Policy → Adapter), and the honest answer is that each
-stage needs a different kind of evidence. This document defines five
-evaluation layers, ordered cheap-and-deterministic → expensive-and-empirical.
-A change should not claim to "improve" behavior without evidence at the
-relevant layer.
+How do we know amotion actually helps an agent? The credible core is the
+**agent operating runtime** (signals → operating state → control policy), so
+that is the primary subject of evaluation; the optional user-affect analyzer is
+evaluated as a separate, lower-stakes track. Each stage needs a different kind
+of evidence. This document defines five evaluation layers, ordered
+cheap-and-deterministic → expensive-and-empirical. A change should not claim to
+"improve" behavior without evidence at the relevant layer.
+
+The central, falsifiable claim: **an operating-state-aware agent is safer and
+more efficient than a blind one** — it stops doomed loops, escalates instead of
+grinding, and verifies before committing — *without* over-aborting healthy runs.
 
 ```
 Layer 1  Component invariants      deterministic   (in repo)
@@ -17,8 +22,17 @@ Layer 5  Multi-turn trajectories   empirical       (v0.5)
 
 ## Layer 1 — Component invariants (deterministic)
 
-The PolicyMapper is a pure function and the StateManager is a bounded
-recurrence, so both can be pinned without any model in the loop.
+The operating-state reducer is a bounded recurrence and both policy mappers are
+pure functions, so all can be pinned without any model in the loop. The
+operating runtime adds two invariants that matter most for trust:
+
+- **Circuit-breaker is exact.** A run of N consecutive failures aborts at
+  exactly N; budget exhaustion aborts deterministically. Verified in
+  `agent-runtime.test.ts`.
+- **Retry budget is monotonic** in friction (more friction ⇒ never more
+  retries), so the runtime forces a strategy change instead of blind looping.
+
+The user-affect mapper and StateManager keep the earlier invariants below.
 
 - **Range invariants.** Every unit-interval policy field stays in `[0, 1]`,
   valence in `[-1, 1]`, enums valid, `maxSteps ≥ 2`. Checked over a dense
