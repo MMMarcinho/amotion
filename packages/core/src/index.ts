@@ -19,5 +19,11 @@ export type {
 } from "./analyzer/transformer-analyzer";
 export { updateAffectiveState } from "./state/state-manager";
 export { mapAffectToPolicy } from "./policy/policy-mapper";
+export { DEFAULT_POLICY_CONFIG } from "./policy/policy-config";
+export type {
+  AttentionCoefficients,
+  PolicyConfig,
+  PolicyThresholds
+} from "./policy/policy-config";
 export { Amotion } from "./runtime/amotion";
 export { policyToSystemHint } from "./prompt-adapter";

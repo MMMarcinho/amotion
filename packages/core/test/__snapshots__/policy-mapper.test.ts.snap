@@ -1,0 +1,236 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`policy-mapper golden archetypes > maps highEngagement to a stable policy 1`] = `
+{
+  "attention": {
+    "emotionalSalience": 0.44000000000000006,
+    "socialFocus": 0.45999999999999996,
+    "taskFocus": 0.728,
+  },
+  "execution": {
+    "autonomy": 0.68,
+    "persistence": 0.72,
+    "retryTolerance": 0.45,
+  },
+  "interaction": {
+    "clarificationBias": 0.45,
+    "optionCount": 4,
+    "pacing": "normal",
+    "tone": "encouraging",
+    "verbosity": "high",
+  },
+  "memory": {
+    "negativeBias": 0.35,
+    "recencyBias": 0.5,
+    "retrievalMode": "exploratory",
+    "writePriority": 0.82,
+  },
+  "planning": {
+    "horizon": "long",
+    "initiative": 0.78,
+    "maxSteps": 7,
+  },
+  "reasoning": {
+    "depth": "high",
+    "selfReflection": 0.65,
+    "verification": 0.45,
+  },
+  "risk": {
+    "actionThreshold": 0.55,
+    "posture": "exploratory",
+  },
+  "tools": {
+    "externalSearchBias": 0.4,
+    "requireConfirmation": false,
+    "usageThreshold": 0.55,
+  },
+}
+`;
+
+exports[`policy-mapper golden archetypes > maps highStress to a stable policy 1`] = `
+{
+  "attention": {
+    "emotionalSalience": 0.8325,
+    "socialFocus": 0.6225,
+    "taskFocus": 0.46249999999999997,
+  },
+  "execution": {
+    "autonomy": 0.24,
+    "persistence": 0.38,
+    "retryTolerance": 0.35,
+  },
+  "interaction": {
+    "clarificationBias": 0.45,
+    "optionCount": 2,
+    "pacing": "slow",
+    "tone": "calm",
+    "verbosity": "low",
+  },
+  "memory": {
+    "negativeBias": 0.18,
+    "recencyBias": 0.72,
+    "retrievalMode": "supportive",
+    "writePriority": 0.4,
+  },
+  "planning": {
+    "horizon": "short",
+    "initiative": 0.28,
+    "maxSteps": 2,
+  },
+  "reasoning": {
+    "depth": "low",
+    "selfReflection": 0.35,
+    "verification": 0.62,
+  },
+  "risk": {
+    "actionThreshold": 0.82,
+    "posture": "conservative",
+  },
+  "tools": {
+    "externalSearchBias": 0.4,
+    "requireConfirmation": true,
+    "usageThreshold": 0.42,
+  },
+}
+`;
+
+exports[`policy-mapper golden archetypes > maps highUncertainty to a stable policy 1`] = `
+{
+  "attention": {
+    "emotionalSalience": 0.485,
+    "socialFocus": 0.485,
+    "taskFocus": 0.5449999999999999,
+  },
+  "execution": {
+    "autonomy": 0.45,
+    "persistence": 0.5,
+    "retryTolerance": 0.45,
+  },
+  "interaction": {
+    "clarificationBias": 0.84,
+    "optionCount": 3,
+    "pacing": "normal",
+    "tone": "direct",
+    "verbosity": "medium",
+  },
+  "memory": {
+    "negativeBias": 0.35,
+    "recencyBias": 0.5,
+    "retrievalMode": "risk_aware",
+    "writePriority": 0.45,
+  },
+  "planning": {
+    "horizon": "medium",
+    "initiative": 0.45,
+    "maxSteps": 4,
+  },
+  "reasoning": {
+    "depth": "medium",
+    "selfReflection": 0.62,
+    "verification": 0.86,
+  },
+  "risk": {
+    "actionThreshold": 0.75,
+    "posture": "conservative",
+  },
+  "tools": {
+    "externalSearchBias": 0.82,
+    "requireConfirmation": false,
+    "usageThreshold": 0.36,
+  },
+}
+`;
+
+exports[`policy-mapper golden archetypes > maps lowTrust to a stable policy 1`] = `
+{
+  "attention": {
+    "emotionalSalience": 0.44000000000000006,
+    "socialFocus": 0.52,
+    "taskFocus": 0.5599999999999999,
+  },
+  "execution": {
+    "autonomy": 0.3,
+    "persistence": 0.5,
+    "retryTolerance": 0.45,
+  },
+  "interaction": {
+    "clarificationBias": 0.45,
+    "optionCount": 3,
+    "pacing": "normal",
+    "tone": "analytical",
+    "verbosity": "medium",
+  },
+  "memory": {
+    "negativeBias": 0.35,
+    "recencyBias": 0.5,
+    "retrievalMode": "balanced",
+    "writePriority": 0.25,
+  },
+  "planning": {
+    "horizon": "medium",
+    "initiative": 0.45,
+    "maxSteps": 4,
+  },
+  "reasoning": {
+    "depth": "medium",
+    "selfReflection": 0.4,
+    "verification": 0.45,
+  },
+  "risk": {
+    "actionThreshold": 0.72,
+    "posture": "balanced",
+  },
+  "tools": {
+    "externalSearchBias": 0.4,
+    "requireConfirmation": true,
+    "usageThreshold": 0.55,
+  },
+}
+`;
+
+exports[`policy-mapper golden archetypes > maps neutral to a stable policy 1`] = `
+{
+  "attention": {
+    "emotionalSalience": 0.44000000000000006,
+    "socialFocus": 0.45999999999999996,
+    "taskFocus": 0.5599999999999999,
+  },
+  "execution": {
+    "autonomy": 0.45,
+    "persistence": 0.5,
+    "retryTolerance": 0.45,
+  },
+  "interaction": {
+    "clarificationBias": 0.45,
+    "optionCount": 3,
+    "pacing": "normal",
+    "tone": "analytical",
+    "verbosity": "medium",
+  },
+  "memory": {
+    "negativeBias": 0.35,
+    "recencyBias": 0.5,
+    "retrievalMode": "balanced",
+    "writePriority": 0.45,
+  },
+  "planning": {
+    "horizon": "medium",
+    "initiative": 0.45,
+    "maxSteps": 4,
+  },
+  "reasoning": {
+    "depth": "medium",
+    "selfReflection": 0.4,
+    "verification": 0.45,
+  },
+  "risk": {
+    "actionThreshold": 0.55,
+    "posture": "balanced",
+  },
+  "tools": {
+    "externalSearchBias": 0.4,
+    "requireConfirmation": false,
+    "usageThreshold": 0.55,
+  },
+}
+`;
