@@ -1,54 +1,25 @@
 import type { AffectiveState, RuntimePolicy } from "../types";
+import { DEFAULT_POLICY_CONFIG, type PolicyConfig } from "./policy-config";
 
 const clamp01 = (value: number) => Math.min(1, Math.max(0, value));
 
-export function mapAffectToPolicy(state: AffectiveState): RuntimePolicy {
-  const policy: RuntimePolicy = {
-    reasoning: {
-      depth: "medium",
-      verification: 0.45,
-      selfReflection: 0.4
-    },
-    planning: {
-      horizon: "medium",
-      maxSteps: 4,
-      initiative: 0.45
-    },
-    memory: {
-      retrievalMode: "balanced",
-      writePriority: 0.45,
-      recencyBias: 0.5,
-      negativeBias: 0.35
-    },
-    tools: {
-      usageThreshold: 0.55,
-      requireConfirmation: false,
-      externalSearchBias: 0.4
-    },
-    interaction: {
-      tone: "analytical",
-      verbosity: "medium",
-      pacing: "normal",
-      optionCount: 3,
-      clarificationBias: 0.45
-    },
-    risk: {
-      posture: "balanced",
-      actionThreshold: 0.55
-    },
-    attention: {
-      taskFocus: clamp01(0.45 + state.engagement * 0.35 - state.stress * 0.15),
-      socialFocus: clamp01(0.35 + state.stress * 0.25 + (1 - state.trust) * 0.15),
-      emotionalSalience: clamp01(0.25 + state.stress * 0.45 + state.arousal * 0.25)
-    },
-    execution: {
-      autonomy: 0.45,
-      retryTolerance: 0.45,
-      persistence: 0.5
-    }
+export function mapAffectToPolicy(
+  state: AffectiveState,
+  config: PolicyConfig = DEFAULT_POLICY_CONFIG
+): RuntimePolicy {
+  const { thresholds, attention } = config;
+  const policy: RuntimePolicy = structuredClone(config.baseline);
+
+  policy.attention = {
+    taskFocus: clamp01(attention.taskFocus.base + state.engagement * attention.taskFocus.engagement - state.stress * attention.taskFocus.stress),
+    socialFocus: clamp01(attention.socialFocus.base + state.stress * attention.socialFocus.stress + (1 - state.trust) * attention.socialFocus.distrust),
+    emotionalSalience: clamp01(attention.emotionalSalience.base + state.stress * attention.emotionalSalience.stress + state.arousal * attention.emotionalSalience.arousal)
   };
 
-  if (state.valence > 0.2 && state.engagement > 0.55) {
+  if (
+    state.valence > thresholds.positiveEngagement.valence &&
+    state.engagement > thresholds.positiveEngagement.engagement
+  ) {
     policy.interaction.tone = "encouraging";
     policy.risk.posture = "exploratory";
     policy.planning.horizon = "long";
@@ -56,7 +27,7 @@ export function mapAffectToPolicy(state: AffectiveState): RuntimePolicy {
     policy.execution.autonomy = 0.58;
   }
 
-  if (state.engagement > 0.75) {
+  if (state.engagement > thresholds.highEngagement) {
     policy.reasoning.depth = "high";
     policy.reasoning.selfReflection = 0.65;
     policy.planning.horizon = "long";
@@ -70,7 +41,7 @@ export function mapAffectToPolicy(state: AffectiveState): RuntimePolicy {
     policy.execution.persistence = 0.72;
   }
 
-  if (state.uncertainty > 0.65) {
+  if (state.uncertainty > thresholds.highUncertainty) {
     policy.reasoning.verification = 0.86;
     policy.reasoning.selfReflection = Math.max(policy.reasoning.selfReflection, 0.62);
     policy.tools.externalSearchBias = 0.82;
@@ -82,7 +53,7 @@ export function mapAffectToPolicy(state: AffectiveState): RuntimePolicy {
     policy.memory.retrievalMode = policy.memory.retrievalMode === "exploratory" ? "exploratory" : "risk_aware";
   }
 
-  if (state.stress > 0.7) {
+  if (state.stress > thresholds.highStress) {
     policy.reasoning.depth = "low";
     policy.reasoning.verification = Math.max(policy.reasoning.verification, 0.62);
     policy.reasoning.selfReflection = 0.35;
@@ -106,7 +77,7 @@ export function mapAffectToPolicy(state: AffectiveState): RuntimePolicy {
     policy.execution.persistence = 0.38;
   }
 
-  if (state.trust < 0.35) {
+  if (state.trust < thresholds.lowTrust) {
     policy.interaction.verbosity = policy.interaction.verbosity === "high" ? "medium" : policy.interaction.verbosity;
     policy.interaction.tone = policy.interaction.tone === "encouraging" ? "direct" : policy.interaction.tone;
     policy.tools.requireConfirmation = true;

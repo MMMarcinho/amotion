@@ -1,36 +1,51 @@
 # amotion
 
-Emotion Runtime for LLM Agents.
+Runtime control layer for LLM agents.
 
-amotion converts emotional signals into runtime policies for LLM agents.
-
-It does not try to make agents "feel emotions".
-It makes agents affect-aware at runtime.
+amotion converts an agent's **operating signals** into runtime control policy.
+The signals are observable execution facts — tool errors, retries, failed
+verifications, retrieval misses, stalls, low self-reported confidence — not
+inferred feelings. The runtime turns them into mechanical control decisions:
+**proceed / verify / replan / escalate / abort**.
 
 ## Core Idea
 
-Emotion is not expression.
-Emotion is runtime resource allocation.
+> Emotion is not expression. Emotion is runtime resource allocation.
+
+The "affective state" amotion tracks is the **agent's own operating state**,
+derived from what the run actually did. That makes every decision auditable
+against the trace: an agent that keeps failing accrues `friction`, loses
+`momentum`, and the runtime escalates or stops it instead of grinding forever.
+
+User emotion is supported too, but only as an **optional external signal** that
+can make the agent more cautious — never as the thing that drives the loop.
 
 ## Pipeline
 
 ```text
-User Input
--> Emotion Analyzer
--> Affective State
--> Runtime Policy
--> Agent Adapter
+Agent execution telemetry        (optional) User affect
+        |                                 |
+        v                                 v
+   Operating Signals  ----------------> AgentRuntime
+                                          |
+                              Operating State (uncertainty,
+                              friction, confidence, momentum, load)
+                                          |
+                                          v
+                              Operating Policy  (proceed / verify /
+                              replan / escalate / abort, retry budget,
+                              verification & confirmation gates, autonomy)
 ```
 
-## What Can Emotion Affect?
+## What Operating State Drives
 
-- reasoning depth
-- planning horizon
-- memory retrieval
+- control decision (proceed / verify / replan / escalate / abort)
+- retry budget (fewer retries as friction rises — forces a strategy change)
+- verification & human-confirmation gates
+- planning horizon and step bounds
 - tool-use threshold
-- response pacing
-- risk posture
-- execution threshold
+- autonomy
+- a deterministic circuit-breaker (consecutive failures / budget exhaustion)
 
 ## Install
 
@@ -38,41 +53,55 @@ User Input
 pnpm add amotion
 ```
 
-## Usage
+## Usage — agent operating runtime
+
+```ts
+import { AgentRuntime } from "amotion";
+
+const rt = new AgentRuntime();
+
+while (true) {
+  const result = runOneStep();
+  const policy = rt.tick(
+    result.ok ? { type: "tool_success" } : { type: "tool_error" }
+  );
+
+  if (policy.stop) break;                 // circuit-breaker tripped
+  if (policy.control === "escalate") askHuman();
+  if (policy.requireVerification) verifyBeforeActing();
+}
+```
+
+See [`examples/agent-loop`](./examples/agent-loop) for a runnable comparison
+of a naive loop vs. a runtime-governed loop on a flaky tool.
+
+## Usage — optional user-affect signal
+
+The original user-affect path still exists. Treat its output as one external
+input that nudges caution, not as ground truth about the user's mind.
 
 ```ts
 import { Amotion, policyToSystemHint } from "amotion";
 
 const amotion = new Amotion();
-
-const result = await amotion.process({
-  message: "我现在有点焦虑，不知道该怎么办",
-});
-
-console.log(result.policy);
-
+const result = await amotion.process({ message: "我现在有点焦虑，不知道该怎么办" });
 const hint = policyToSystemHint(result.policy);
-```
-
-Output:
-
-```ts
-{
-  signal,
-  state,
-  policy
-}
 ```
 
 ## Design Principle
 
 amotion does not directly control the LLM.
 It outputs runtime policy.
-Adapters translate policy into concrete agent behavior.
+The agent's loop (or an adapter) translates policy into concrete behavior.
 
-## Emotion Analyzer
+## Optional: User-Affect Analyzer
 
-The default analyzer is `TransformerEmotionAnalyzer`.
+This is the **external, optional** signal path. It estimates user emotion from
+text and exposes it as a caution input to the runtime. It is inherently noisy
+and culturally loaded — see [EVALUATION.md](./EVALUATION.md) for how its
+fidelity is measured and [ROADMAP.md](./ROADMAP.md) for where it fits.
+
+The analyzer is `TransformerEmotionAnalyzer`.
 
 It uses Transformers.js (`@huggingface/transformers`) with a local ONNX text-classification model:
 
