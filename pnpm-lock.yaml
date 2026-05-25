@@ -33,6 +33,12 @@ importers:
         specifier: ^2.1.8
         version: 2.1.9(@types/node@25.9.0)
 
+  bench:
+    dependencies:
+      amotion:
+        specifier: workspace:*
+        version: link:../packages/core
+
   evals:
     dependencies:
       amotion:
@@ -83,6 +89,12 @@ importers:
         version: 19.2.3(@types/react@19.2.14)
 
   packages/adapters:
+    dependencies:
+      amotion:
+        specifier: workspace:*
+        version: link:../core
+
+  packages/adapters-langgraph:
     dependencies:
       amotion:
         specifier: workspace:*

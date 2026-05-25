@@ -153,6 +153,8 @@ const analyzer = new TransformerEmotionAnalyzer({
 
 - `amotion`: core schema, analyzer, state manager, policy mapper, runtime class, and prompt hint helper.
 - `@amotion/adapters`: framework-neutral adapter helpers for generic agents and future framework integrations.
+- `@amotion/adapters-langgraph`: initial LangGraph-facing operating-policy node, routing, interrupt, signal, and fake-bench helpers.
+- `@amotion/bench`: deterministic tau-bench-style A/B harness comparing naive vs. operating-runtime-governed loops, with a held-out report split.
 
 ## Development
 
