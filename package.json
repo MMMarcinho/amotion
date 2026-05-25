@@ -8,6 +8,7 @@
   "scripts": {
     "build": "corepack pnpm -r build",
     "dev": "corepack pnpm --filter @amotion/playground dev",
+    "experiment:functional": "corepack pnpm tsx --tsconfig tsconfig.base.json scripts/functional-experiment.ts",
     "test": "corepack pnpm -r test",
     "typecheck": "corepack pnpm -r typecheck"
   },
